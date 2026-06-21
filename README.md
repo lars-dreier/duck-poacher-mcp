@@ -5,9 +5,6 @@ DuckDuckGo web and image search to MCP clients (Claude Desktop, Claude Code, and
 others). It wraps the [`duck-poacher`](https://github.com/lars-dreier/duck-poacher)
 scraper.
 
-Because `duck-poacher` scrapes DuckDuckGo's search endpoints rather than a public,
-versioned API, response formats can change upstream and break a tool call.
-
 ## Tools
 
 | Tool | Arguments | Returns |
@@ -15,9 +12,9 @@ versioned API, response formats can change upstream and break a tool call.
 | `web_search` | `query` | JSON array of `{ title, url, description }` |
 | `image_search` | `query`, optional `time` / `size` / `color` / `type` / `layout` / `license` / `safeSearch` | JSON array of `{ thumbnailUrl, imageUrl }` |
 
-Results are returned as a JSON string in a single text content block. A failed
+Both tools return their results as a JSON string. A failed
 scrape (token/URL could not be read, upstream HTTP error) comes back as a tool
-result with `isError: true` and the message, rather than crashing the server.
+result with `isError: true` and the message.
 
 ## Use with an MCP client
 
@@ -28,6 +25,21 @@ claude mcp add duck-poacher -- npx -y duck-poacher-mcp
 ```
 
 Or configure it directly (e.g. Claude Desktop's `claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "duck-poacher": {
+      "command": "npx",
+      "args": ["-y", "duck-poacher-mcp"]
+    }
+  }
+}
+```
+
+### LM Studio
+
+Edit LM Studio's `mcp.json` (Program tab → **Edit mcp.json**) and add the same entry:
 
 ```json
 {
