@@ -1,0 +1,79 @@
+{
+	"name": "duck-poacher-mcp",
+	"version": "0.1.0",
+	"description": "Model Context Protocol server exposing DuckDuckGo web and image search via duck-poacher.",
+	"type": "module",
+	"types": "./dist/index.d.mts",
+	"main": "./dist/index.mjs",
+	"bin": {
+		"duck-poacher-mcp": "./dist/cli.mjs"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/index.d.mts",
+			"default": "./dist/index.mjs"
+		},
+		"./package.json": "./package.json"
+	},
+	"sideEffects": false,
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsdown",
+		"typecheck": "tsc --noEmit",
+		"check:exports": "attw --pack . --profile esm-only",
+		"prepublishOnly": "npm test && npm run typecheck && npm run build && npm run check:exports",
+		"dev": "tsdown --watch",
+		"test": "tsx --test \"test/**/*.test.ts\"",
+		"test:coverage": "tsx --test --experimental-test-coverage \"test/**/*.test.ts\"",
+		"test:watch": "tsx --test --watch \"test/**/*.test.ts\"",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"format": "dprint fmt",
+		"format:check": "dprint check"
+	},
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"duckduckgo",
+		"search",
+		"image-search",
+		"web-search",
+		"scraper"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/lars-dreier/duck-poacher-mcp.git"
+	},
+	"bugs": {
+		"url": "https://github.com/lars-dreier/duck-poacher-mcp/issues"
+	},
+	"homepage": "https://github.com/lars-dreier/duck-poacher-mcp#readme",
+	"author": {
+		"name": "Lars Dreier",
+		"email": "ldreier@posteo.de"
+	},
+	"license": "ISC",
+	"engines": {
+		"node": ">=18"
+	},
+	"devDependencies": {
+		"@arethetypeswrong/cli": "0.18.3",
+		"@eslint/js": "10.0.1",
+		"@types/node": "25.9.3",
+		"dprint": "0.54.0",
+		"eslint": "10.5.0",
+		"eslint-config-prettier": "10.1.8",
+		"globals": "17.6.0",
+		"tsdown": "0.22.2",
+		"tsx": "4.22.4",
+		"typescript": "6.0.3",
+		"typescript-eslint": "8.61.0"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"duck-poacher": "^0.7.1",
+		"zod": "^4.4.3"
+	}
+}
