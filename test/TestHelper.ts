@@ -39,11 +39,22 @@ export async function connectTestClient(): Promise<{ client: Client; close: () =
 	};
 }
 
+/** The pagination envelope the handlers serialize as the tool result text. */
+export type PaginatedPayload = {
+	page: number;
+	pageSize: number;
+	totalResults: number;
+	totalPages: number;
+	hasMore: boolean;
+	results: unknown[];
+};
+
 /**
  * Asserts a tool result is a successful single text block and returns its parsed
- * JSON payload (the handlers serialize the duck-poacher result array as text).
+ * JSON payload — the pagination envelope the handlers serialize (a page of results
+ * plus metadata).
  */
-export function parseToolResults(result: unknown): unknown[] {
+export function parseToolResult(result: unknown): PaginatedPayload {
 	const { isError, content } = result as { isError?: unknown; content?: unknown };
 	assert.notEqual(isError, true, 'tool result should not be an error');
 	assert.ok(Array.isArray(content), 'content should be an array');
@@ -52,7 +63,38 @@ export function parseToolResults(result: unknown): unknown[] {
 	assert.equal(block.type, 'text', 'first content block should be text');
 	assert.equal(typeof block.text, 'string', 'text block should carry a string');
 
-	const parsed = JSON.parse(block.text as string) as unknown;
-	assert.ok(Array.isArray(parsed), 'payload should be a JSON array');
+	const parsed = JSON.parse(block.text as string) as PaginatedPayload;
+	assert.ok(Array.isArray(parsed.results), 'payload should carry a results array');
 	return parsed;
+}
+
+/**
+ * Asserts cross-page behavior for a search tool: the second page comes from the
+ * same cached snapshot (identical `totalResults`) and does not repeat any
+ * first-page result. Data-adaptive on purpose — if the live dependency currently
+ * returns a single page (`hasMore` false), there is no second page to exercise, so
+ * it no-ops. The day the dependency returns more, the same spec exercises real
+ * pagination with no test change. The page math itself is covered offline in
+ * paginate.test.ts. `identity` extracts a result's dedup key (e.g. its URL).
+ */
+export async function assertCrossPageSnapshot(
+	client: Client,
+	toolName: string,
+	identity: (entry: Record<string, unknown>) => unknown,
+): Promise<void> {
+	const first = parseToolResult(await client.callTool({ name: toolName, arguments: { query: TEST_QUERY } }));
+	if (!first.hasMore) {
+		return;
+	}
+
+	const second = parseToolResult(
+		await client.callTool({ name: toolName, arguments: { query: TEST_QUERY, page: 2 } })
+	);
+	assert.equal(second.page, 2);
+	assert.equal(second.totalResults, first.totalResults, 'both pages come from one cached snapshot');
+
+	const firstIds = new Set((first.results as Record<string, unknown>[]).map(identity));
+	for (const entry of second.results as Record<string, unknown>[]) {
+		assert.ok(!firstIds.has(identity(entry)), 'second page should not repeat first-page results');
+	}
 }
