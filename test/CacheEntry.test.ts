@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import CacheEntry from '../src/CacheEntry.ts';
+import CacheEntry from '../src/cache/CacheEntry.ts';
 
 const TTL_MS = 60 * 60 * 1000;
 

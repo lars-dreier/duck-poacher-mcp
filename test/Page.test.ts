@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import Page from '../src/Page.ts';
+import Page from '../src/result/Page.ts';
 
 const PAGE_SIZE = 10;
 const range = (count: number): number[] => Array.from({ length: count }, (_, index) => index);

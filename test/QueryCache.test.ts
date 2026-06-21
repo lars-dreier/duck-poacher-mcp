@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import QueryCache from '../src/QueryCache.ts';
+import QueryCache from '../src/cache/QueryCache.ts';
 
 const TTL_MS = 60 * 60 * 1000;
 

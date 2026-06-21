@@ -1,9 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { type DdgSearchOptions, DuckDuckGo, type ImageSearchResult, type WebSearchResult } from 'duck-poacher';
 import { z } from 'zod';
-import Page from './Page.ts';
-import QueryCache from './QueryCache.ts';
-import ToolResult from './ToolResult.ts';
+import QueryCache from './cache/QueryCache.ts';
+import Page from './result/Page.ts';
+import ToolResult from './result/ToolResult.ts';
 
 const PAGE_DESCRIPTION = '1-based page number; 10 results per page.';
 
