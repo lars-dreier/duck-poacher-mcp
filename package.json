@@ -1,7 +1,7 @@
 {
 	"name": "duck-poacher-mcp",
 	"version": "0.1.0",
-	"description": "Model Context Protocol server exposing DuckDuckGo web and image search via duck-poacher.",
+	"description": "MCP server exposing DuckDuckGo web and image search via duck-poacher.",
 	"type": "module",
 	"types": "./dist/index.d.mts",
 	"main": "./dist/index.mjs",
