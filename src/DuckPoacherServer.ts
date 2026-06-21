@@ -4,36 +4,44 @@ import { z } from 'zod';
 import QueryCache from './cache/QueryCache.ts';
 import Page from './result/Page.ts';
 import ToolResult from './result/ToolResult.ts';
+import type { ImageSearchFilters } from './search/ImageSearchFilters.ts';
 
-const PAGE_DESCRIPTION = '1-based page number; 10 results per page.';
-
-const WEB_SEARCH_OBJECT = z.object({
-	query: z.string().min(1).describe('The search terms to look up on DuckDuckGo.'),
-	page: z.number().int().min(1).optional().default(1).describe(PAGE_DESCRIPTION)
-});
-
-const IMAGE_SEARCH_OBJECT = z.object({
-	query: z.string().min(1).describe('The search terms to look up on DuckDuckGo.'),
-	page: z.number().int().min(1).optional().default(1).describe(PAGE_DESCRIPTION),
-	time: z.enum(['Day', 'Week', 'Month']).optional().describe('Restrict results to the last day, week, or month.'),
-	size: z.enum(['Small', 'Medium', 'Large', 'Wallpaper']).optional().describe('Filter by image size.'),
-	color: z.enum(['color', 'Monochrome']).optional().describe('Filter by color or monochrome images.'),
-	type: z.enum(['photo', 'clipart', 'gif', 'transparent', 'line']).optional().describe('Filter by image type.'),
-	layout: z.enum(['Square', 'Tall', 'Wide']).optional().describe('Filter by image orientation.'),
-	license: z.enum(['Any', 'Public']).optional().describe('Filter by license.'),
-	safeSearch: z.boolean().optional().describe('Enable or disable safe search.')
-});
-
-const CACHE_TTL_MS = 60 * 60 * 1000;
-const CACHE_MAX_ENTRIES = 100;
-const PAGE_SIZE = 10;
-
-// MCP server exposing DuckDuckGo web and image search as cached, paginated tools.
+/**
+ * MCP server exposing DuckDuckGo web and image search as cached, paginated tools.
+ */
 export default class DuckPoacherServer {
+	private static readonly PAGE_DESCRIPTION: string = '1-based page number; 10 results per page.';
+	private static readonly CACHE_TTL_MS: number = 60 * 60 * 1000;
+	private static readonly CACHE_MAX_ENTRIES: number = 100;
+	private static readonly PAGE_SIZE: number = 10;
+
+	private static readonly WEB_SEARCH_OBJECT = z.object({
+		query: z.string().min(1).describe('The search terms to look up on DuckDuckGo.'),
+		page: z.number().int().min(1).optional().default(1).describe(DuckPoacherServer.PAGE_DESCRIPTION)
+	});
+
+	private static readonly IMAGE_SEARCH_OBJECT = z.object({
+		query: z.string().min(1).describe('The search terms to look up on DuckDuckGo.'),
+		page: z.number().int().min(1).optional().default(1).describe(DuckPoacherServer.PAGE_DESCRIPTION),
+		time: z.enum(['Day', 'Week', 'Month']).optional().describe('Restrict results to the last day, week, or month.'),
+		size: z.enum(['Small', 'Medium', 'Large', 'Wallpaper']).optional().describe('Filter by image size.'),
+		color: z.enum(['color', 'Monochrome']).optional().describe('Filter by color or monochrome images.'),
+		type: z.enum(['photo', 'clipart', 'gif', 'transparent', 'line']).optional().describe('Filter by image type.'),
+		layout: z.enum(['Square', 'Tall', 'Wide']).optional().describe('Filter by image orientation.'),
+		license: z.enum(['Any', 'Public']).optional().describe('Filter by license.'),
+		safeSearch: z.boolean().optional().describe('Enable or disable safe search.')
+	});
+
 	private readonly _ddg = new DuckDuckGo();
 	private readonly _server: McpServer;
-	private readonly _webCache = new QueryCache<WebSearchResult>(CACHE_TTL_MS, CACHE_MAX_ENTRIES);
-	private readonly _imageCache = new QueryCache<ImageSearchResult>(CACHE_TTL_MS, CACHE_MAX_ENTRIES);
+	private readonly _webCache = new QueryCache<WebSearchResult>(
+		DuckPoacherServer.CACHE_TTL_MS,
+		DuckPoacherServer.CACHE_MAX_ENTRIES
+	);
+	private readonly _imageCache = new QueryCache<ImageSearchResult>(
+		DuckPoacherServer.CACHE_TTL_MS,
+		DuckPoacherServer.CACHE_MAX_ENTRIES
+	);
 
 	public constructor(name: string, version: string) {
 		this._server = new McpServer({ name, version });
@@ -51,7 +59,7 @@ export default class DuckPoacherServer {
 				title: 'DuckDuckGo web search',
 				description:
 					'Search the web via DuckDuckGo. Returns a page of results, each with a title, URL, and description, plus pagination metadata. Results are cached for an hour; request later pages of the same query with `page` to read more without re-searching.',
-				inputSchema: WEB_SEARCH_OBJECT.shape
+				inputSchema: DuckPoacherServer.WEB_SEARCH_OBJECT.shape
 			},
 			async ({ query, page }) =>
 				(await this.serve(this._webCache, { query }, page, () => this._ddg.webSearch(query))).toCallResult()
@@ -63,7 +71,7 @@ export default class DuckPoacherServer {
 				title: 'DuckDuckGo image search',
 				description:
 					'Search for images via DuckDuckGo. Returns a page of results, each with an image URL and a thumbnail URL, plus pagination metadata. Supports optional filters for time, size, color, type, layout, and license. Results are cached for an hour; request later pages of the same query and filters with `page` to read more without re-searching.',
-				inputSchema: IMAGE_SEARCH_OBJECT.shape
+				inputSchema: DuckPoacherServer.IMAGE_SEARCH_OBJECT.shape
 			},
 			async ({ query, page, ...filters }) =>
 				(await this.serve(
@@ -75,7 +83,7 @@ export default class DuckPoacherServer {
 		);
 	}
 
-	private toImageOptions(filters: Omit<z.infer<typeof IMAGE_SEARCH_OBJECT>, 'query' | 'page'>): DdgSearchOptions {
+	private toImageOptions(filters: ImageSearchFilters): DdgSearchOptions {
 		const options: DdgSearchOptions = {};
 		if (filters.time !== undefined) {
 			options.time = filters.time;
@@ -118,6 +126,6 @@ export default class DuckPoacherServer {
 			}
 			cache.set(payload, results);
 		}
-		return ToolResult.text(JSON.stringify(new Page(results, page, PAGE_SIZE), null, 2));
+		return ToolResult.text(JSON.stringify(new Page(results, page, DuckPoacherServer.PAGE_SIZE), null, 2));
 	}
 }

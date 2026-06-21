@@ -1,4 +1,6 @@
-// One page of a result set together with the metadata describing where it sits.
+/**
+ * One page of a result set together with the metadata describing where it sits.
+ */
 export default class Page<T> {
 	public readonly page: number;
 	public readonly pageSize: number;

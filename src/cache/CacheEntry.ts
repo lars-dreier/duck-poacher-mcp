@@ -1,4 +1,6 @@
-// One query's cached results paired with the time they were stored.
+/**
+ * One query's cached results paired with the time they were stored.
+ */
 export default class CacheEntry<T> {
 	public constructor(
 		public readonly results: T[],

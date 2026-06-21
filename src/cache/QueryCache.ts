@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto';
 import CacheEntry from './CacheEntry.ts';
 
-// In-memory cache of search results keyed by query, bounded by a TTL and a
-// max-entry cap.
+/**
+ * In-memory cache of search results keyed by query, bounded by a TTL and a
+ * max-entry cap.
+ */
 export default class QueryCache<T> {
 	private readonly _entries = new Map<string, CacheEntry<T>>();
 
@@ -13,7 +15,9 @@ export default class QueryCache<T> {
 		private readonly _now: () => number = () => Date.now(),
 	) {}
 
-	// Stale entries are dropped lazily here on read; there is no background sweep.
+	/**
+	 * Stale entries are dropped lazily here on read; there is no background sweep.
+	 */
 	public get(payload: unknown): T[] | undefined {
 		const key = this.createKey(payload);
 		const entry = this._entries.get(key);
@@ -40,7 +44,9 @@ export default class QueryCache<T> {
 
 	private createKey(payload: unknown): string {
 		// Sort keys so a filter set in a different order maps to the same entry.
-		const keys = payload !== null && typeof payload === 'object' ? Object.keys(payload).sort() : undefined;
+		const keys: string[] | undefined = payload !== null && typeof payload === 'object'
+			? Object.keys(payload).sort()
+			: undefined;
 		return createHash('md5').update(JSON.stringify(payload, keys)).digest('hex');
 	}
 }
