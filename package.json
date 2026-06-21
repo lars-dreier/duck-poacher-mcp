@@ -3,27 +3,16 @@
 	"version": "0.1.0",
 	"description": "MCP server exposing DuckDuckGo web and image search via duck-poacher.",
 	"type": "module",
-	"types": "./dist/index.d.mts",
-	"main": "./dist/index.mjs",
 	"bin": {
 		"duck-poacher-mcp": "./dist/cli.mjs"
 	},
-	"exports": {
-		".": {
-			"types": "./dist/index.d.mts",
-			"default": "./dist/index.mjs"
-		},
-		"./package.json": "./package.json"
-	},
-	"sideEffects": false,
 	"files": [
 		"dist"
 	],
 	"scripts": {
 		"build": "tsdown",
 		"typecheck": "tsc --noEmit",
-		"check:exports": "attw --pack . --profile esm-only",
-		"prepublishOnly": "npm test && npm run typecheck && npm run build && npm run check:exports",
+		"prepublishOnly": "npm test && npm run typecheck && npm run build",
 		"dev": "tsdown --watch",
 		"test": "tsx --test \"test/**/*.test.ts\"",
 		"test:coverage": "tsx --test --experimental-test-coverage \"test/**/*.test.ts\"",
@@ -59,7 +48,6 @@
 		"node": ">=18"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "0.18.3",
 		"@eslint/js": "10.0.1",
 		"@types/node": "25.9.3",
 		"dprint": "0.54.0",

@@ -57,7 +57,7 @@ Edit LM Studio's `mcp.json` (Program tab → **Edit mcp.json**) and add the same
 ```sh
 npm install
 npm test          # live integration specs — hit DuckDuckGo, need network
-npm run build     # bundle to dist/ (ESM + .d.ts), bin → dist/cli.mjs
+npm run build     # bundle to dist/ (ESM), bin → dist/cli.mjs
 ```
 
 Inspect the tools interactively with the MCP Inspector:
