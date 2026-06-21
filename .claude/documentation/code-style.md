@@ -181,8 +181,7 @@ works. Other conventions:
   `{ type X }`) for type-only imports — e.g. `import type SearchResult` when a
   class is used only as a return type, and `src/index.ts` re-exporting option
   types with `export type`.
-- Node built-ins are imported as namespaces in `src/`: `import * as http from
-  'http'`. Test files use the `node:` prefix, e.g. `node:test`,
+- Test files use the `node:` prefix for built-ins, e.g. `node:test`,
   `node:assert/strict`.
 - Default export per file for classes; the barrel `src/index.ts` re-exports them
   under their names (`export { default as Service }`) and re-exports any shared
