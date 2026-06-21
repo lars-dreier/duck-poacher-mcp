@@ -3,7 +3,7 @@ title: "Code Style & Conventions"
 description: "Source of truth for how source code is written in this repo: object-oriented-by-default, one-class/one-type-per-file, no module-level state, explicit types and access modifiers, JSDoc declaration comments, naming, imports, and the ESLint/dprint rules that enforce them."
 category: "guide"
 tags: ["code-style", "conventions", "oop", "value-objects", "types", "comments", "jsdoc", "naming", "eslint", "dprint"]
-last_updated: "2026-06-22T00:00:00Z"
+last_updated: "2026-06-21T22:40:19Z"
 related_docs: ["testing.md"]
 ---
 
@@ -39,10 +39,11 @@ list). Run both on every change — `npm run format` then `npm run lint`.
 
 All logic lives in **classes and their methods** — no free-standing functions
 implementing behavior in `src/`. Pure transformations become **value objects** that
-do their work in the constructor and expose `readonly` results: `paginate(...)` is a
-`Page` that slices and computes its metadata on construction; a cached row is a
-`CacheEntry` that answers `isExpired(now, ttlMs)` instead of being a bare record the
-cache inspects. Behavior travels with its data (tell, don't ask).
+do their work in the constructor and expose `readonly` results: a `Page` slices the
+result set and computes its pagination metadata on construction
+(`new Page(results, page, pageSize)`); a cached row is a `CacheEntry` that answers
+`isExpired(now, ttlMs)` instead of being a bare record the cache inspects. Behavior
+travels with its data (tell, don't ask).
 
 **Exempt** from the OOP rules (this section, one-class-per-file, no-module-level-state):
 
@@ -55,7 +56,7 @@ cache inspects. Behavior travels with its data (tell, don't ask).
 
 | Element | Convention | Example |
 |---------|-----------|---------|
-| Folders | lowercase, hyphenated for multiword | `src/`, `web/`, `image-search/` |
+| Folders | lowercase, hyphenated for multiword | `src/`, `cache/`, `result/`, `search/` |
 | Class files | PascalCase, match the class | `Service.ts`, `ApiClient.ts` |
 | Classes | PascalCase | `Service`, `ApiClient`, `SearchResult` |
 | Methods / locals | camelCase | `generateToken`, `fetchResults` |
