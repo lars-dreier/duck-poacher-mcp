@@ -1,16 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { type DdgSearchOptions, DuckDuckGo, type ImageSearchResult, type WebSearchResult } from 'duck-poacher';
 import { z } from 'zod';
-import { paginate } from './paginate.ts';
+import Page from './Page.ts';
 import QueryCache from './QueryCache.ts';
-
-// A scraped DuckDuckGo call can fail for reasons the model should see (token
-// could not be read, upstream HTTP error). MCP convention is to report those as
-// a tool result with isError set, not by throwing out of the handler.
-type ToolResult = {
-	content: { type: 'text'; text: string }[];
-	isError?: boolean;
-};
+import ToolResult from './ToolResult.ts';
 
 const PAGE_DESCRIPTION = '1-based page number; 10 results per page.';
 
@@ -31,12 +24,11 @@ const IMAGE_SEARCH_OBJECT = z.object({
 	safeSearch: z.boolean().optional().describe('Enable or disable safe search.')
 });
 
-type ImageSearchArgs = z.infer<typeof IMAGE_SEARCH_OBJECT>;
-
 const CACHE_TTL_MS = 60 * 60 * 1000;
 const CACHE_MAX_ENTRIES = 100;
 const PAGE_SIZE = 10;
 
+// MCP server exposing DuckDuckGo web and image search as cached, paginated tools.
 export default class DuckPoacherServer {
 	private readonly _ddg = new DuckDuckGo();
 	private readonly _server: McpServer;
@@ -61,7 +53,8 @@ export default class DuckPoacherServer {
 					'Search the web via DuckDuckGo. Returns a page of results, each with a title, URL, and description, plus pagination metadata. Results are cached for an hour; request later pages of the same query with `page` to read more without re-searching.',
 				inputSchema: WEB_SEARCH_OBJECT.shape
 			},
-			async ({ query, page }) => this.serve(this._webCache, { query }, page, () => this._ddg.webSearch(query))
+			async ({ query, page }) =>
+				(await this.serve(this._webCache, { query }, page, () => this._ddg.webSearch(query))).toCallResult()
 		);
 
 		this._server.registerTool(
@@ -73,16 +66,16 @@ export default class DuckPoacherServer {
 				inputSchema: IMAGE_SEARCH_OBJECT.shape
 			},
 			async ({ query, page, ...filters }) =>
-				this.serve(
+				(await this.serve(
 					this._imageCache,
 					{ query, ...filters },
 					page,
 					() => this._ddg.imageSearch(query, this.toImageOptions(filters))
-				)
+				)).toCallResult()
 		);
 	}
 
-	private toImageOptions(filters: Omit<ImageSearchArgs, 'query' | 'page'>): DdgSearchOptions {
+	private toImageOptions(filters: Omit<z.infer<typeof IMAGE_SEARCH_OBJECT>, 'query' | 'page'>): DdgSearchOptions {
 		const options: DdgSearchOptions = {};
 		if (filters.time !== undefined) {
 			options.time = filters.time;
@@ -121,11 +114,10 @@ export default class DuckPoacherServer {
 			}
 			catch (error) {
 				const message = error instanceof Error ? error.message : String(error);
-				return { content: [{ type: 'text', text: `Search failed: ${message}` }], isError: true };
+				return ToolResult.error(`Search failed: ${message}`);
 			}
 			cache.set(payload, results);
 		}
-		const pageResult = paginate(results, page, PAGE_SIZE);
-		return { content: [{ type: 'text', text: JSON.stringify(pageResult, null, 2) }] };
+		return ToolResult.text(JSON.stringify(new Page(results, page, PAGE_SIZE), null, 2));
 	}
 }

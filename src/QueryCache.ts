@@ -1,33 +1,26 @@
 import { createHash } from 'node:crypto';
+import CacheEntry from './CacheEntry.ts';
 
-// A snapshot of one query's full result array plus when it was cached, so reads
-// can lazily drop stale entries without a background sweep.
-type CacheEntry<T> = {
-	results: T[];
-	createdAt: number;
-};
-
-// In-memory, per-query result cache for the long-lived stdio server. Memory is
-// bounded two ways: a per-key TTL check on read evicts stale entries, and a hard
-// max-entry cap evicts the oldest on write. Both reads and writes are O(1), so
-// there is no full-cache sweep. `_now` is injectable so TTL expiry is testable
-// without timers.
+// In-memory cache of search results keyed by query, bounded by a TTL and a
+// max-entry cap.
 export default class QueryCache<T> {
 	private readonly _entries = new Map<string, CacheEntry<T>>();
 
 	public constructor(
 		private readonly _ttlMs: number,
 		private readonly _maxEntries: number,
+		// Injectable so TTL expiry is testable without real timers.
 		private readonly _now: () => number = () => Date.now(),
 	) {}
 
+	// Stale entries are dropped lazily here on read; there is no background sweep.
 	public get(payload: unknown): T[] | undefined {
 		const key = this.createKey(payload);
 		const entry = this._entries.get(key);
 		if (entry === undefined) {
 			return undefined;
 		}
-		if (this._now() - entry.createdAt > this._ttlMs) {
+		if (entry.isExpired(this._now(), this._ttlMs)) {
 			this._entries.delete(key);
 			return undefined;
 		}
@@ -42,7 +35,7 @@ export default class QueryCache<T> {
 				this._entries.delete(oldest);
 			}
 		}
-		this._entries.set(this.createKey(payload), { results, createdAt: this._now() });
+		this._entries.set(this.createKey(payload), new CacheEntry(results, this._now()));
 	}
 
 	private createKey(payload: unknown): string {
