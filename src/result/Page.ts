@@ -10,9 +10,9 @@ export default class Page<T> {
 	public readonly results: T[];
 
 	public constructor(allResults: T[], page: number, pageSize: number) {
-		const totalResults = allResults.length;
-		const totalPages = Math.max(1, Math.ceil(totalResults / pageSize));
-		const start = (page - 1) * pageSize;
+		const totalResults: number = allResults.length;
+		const totalPages: number = Math.max(1, Math.ceil(totalResults / pageSize));
+		const start: number = (page - 1) * pageSize;
 
 		this.page = page;
 		this.pageSize = pageSize;

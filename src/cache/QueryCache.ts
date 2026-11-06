@@ -2,8 +2,7 @@ import { createHash } from 'node:crypto';
 import CacheEntry from './CacheEntry.ts';
 
 /**
- * In-memory cache of search results keyed by query, bounded by a TTL and a
- * max-entry cap.
+ * In-memory cache of search results keyed by query, bounded by a TTL and a max-entry cap.
  */
 export default class QueryCache<T> {
 	private readonly _entries = new Map<string, CacheEntry<T>>();
@@ -13,21 +12,25 @@ export default class QueryCache<T> {
 		private readonly _maxEntries: number,
 		// Injectable so TTL expiry is testable without real timers.
 		private readonly _now: () => number = () => Date.now(),
-	) {}
+	) {
+	}
 
 	/**
 	 * Stale entries are dropped lazily here on read; there is no background sweep.
 	 */
 	public get(payload: unknown): T[] | undefined {
-		const key = this.createKey(payload);
-		const entry = this._entries.get(key);
+		const key: string = this.createKey(payload);
+		const entry: CacheEntry<T> | undefined = this._entries.get(key);
+
 		if (entry === undefined) {
 			return undefined;
 		}
+
 		if (entry.isExpired(this._now(), this._ttlMs)) {
 			this._entries.delete(key);
 			return undefined;
 		}
+
 		return entry.results;
 	}
 
