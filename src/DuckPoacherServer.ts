@@ -1,5 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { type DdgSearchOptions, DuckDuckGo, type ImageSearchResult, type WebSearchResult } from 'duck-poacher';
+import { type DdgImageSearchOptions, DuckDuckGo, type ImageSearchResult, type WebSearchResult } from 'duck-poacher';
 import { z } from 'zod';
 import QueryCache from './cache/QueryCache.ts';
 import Page from './result/Page.ts';
@@ -83,8 +83,8 @@ export default class DuckPoacherServer {
 		);
 	}
 
-	private toImageOptions(filters: ImageSearchFilters): DdgSearchOptions {
-		const options: DdgSearchOptions = {};
+	private toImageOptions(filters: ImageSearchFilters): DdgImageSearchOptions {
+		const options: DdgImageSearchOptions = {};
 		if (filters.time !== undefined) {
 			options.time = filters.time;
 		}
@@ -104,7 +104,7 @@ export default class DuckPoacherServer {
 			options.license = filters.license;
 		}
 		if (filters.safeSearch !== undefined) {
-			options.safeSearch = filters.safeSearch;
+			options.safeSearch = filters.safeSearch ? 'Strict' : 'Off';
 		}
 		return options;
 	}
